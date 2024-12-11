@@ -24,6 +24,47 @@
     <title>Recipe WebApp</title>
   </head>
   <body>
+    <div class="container mt-5">
+      <h1 class="text-center mb-4">Daily Task Manager</h1>
+      <!-- Task Input Section -->
+      <div class="row mb-4">
+        <div class="col-md-8 offset-md-2">
+          <div class="input-group">
+            <input
+              type="text"
+              id="taskInput"
+              class="form-control"
+              placeholder="Enter a new task"
+            />
+            <input
+              type="date"
+              id="taskDueDate"
+              class="form-control"
+              style="max-width: 150px"
+            />
+            <button id="addTaskBtn" class="btn btn-primary">
+              <i class="fas fa-plus"></i> Add Task
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tasks Sections -->
+      <div class="row">
+        <!-- Pending Tasks -->
+        <div class="col-md-6">
+          <h3 class="text-warning">Pending Tasks</h3>
+          <div id="pendingTasksList" class="task-list"></div>
+        </div>
+
+        <!-- Completed Tasks -->
+        <div class="col-md-6">
+          <h3 class="text-success">Completed Tasks</h3>
+          <div id="completedTasksList" class="task-list"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Bootstrap JS link -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
