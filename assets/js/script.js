@@ -29,17 +29,22 @@ document.addEventListener('DOMContentLoaded', () => {
       li.innerHTML = `
                 <span class="${task.completed ? 'completed-task' : ''}">${task.content}</span>
                 <div class="task-actions">
-                    <button class="btn btn-sm btn-outline-primary edit-task" data-id="${task.id}">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger delete-task" data-id="${task.id}">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-success toggle-task" data-id="${task.id}">
-                        <i class="fas ${task.completed ? 'fa-undo' : 'fa-check'}"></i>
-                    </button>
+                  ${!task.completed ? `
+                      <button class="btn btn-sm btn-outline-success toggle-task" data-id="${task.id}">
+                          <i class="fas fa-check"></i>
+                      </button>
+                      <button class="btn btn-sm btn-outline-primary edit-task" data-id="${task.id}">
+                          <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="btn btn-sm btn-outline-danger delete-task" data-id="${task.id}">
+                          <i class="fas fa-trash"></i>
+                      </button>
+                      ` : `
+                      <button class="btn btn-sm btn-outline-danger delete-task" data-id="${task.id}">
+                          <i class="fas fa-trash"></i>
+                      </button>`}
                 </div>
-            `;
+              `;
 
       if (task.completed) {
         completedTasksList.appendChild(li);
@@ -79,10 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
         StorageManager.saveTasks(tasks);
         renderTasks();
         taskInput.value = '';
-        const successModal = new bootstrap.Modal(document.getElementById('successModal'));
-        document.getElementById('successModalBody').textContent = 'Task added successfully!';
-        successModal.show();
-        setTimeout(() => successModal.hide(), 3000);
+        showModal('success', 'Task added successfully!');
       } catch (error) {
         console.error('Failed to add task:', error);
         showModal('error', 'Failed to add task. Please try again.');
@@ -150,15 +152,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (newStatus) {
           await TodoistAPI.closeTask(taskId);
         } else {
+          // When reopening a task, we need to send a valid field
           await TodoistAPI.updateTask(taskId, { completed: false });
         }
         tasks[taskIndex].completed = newStatus;
         StorageManager.saveTasks(tasks);
         renderTasks();
-        showModal('success', `Task marked as ${newStatus ? 'completed' : 'pending'}!`);
+        showModal('success', `Task marked as ${newStatus ? 'completed' : 'pending'} !`);
       } catch (error) {
         console.error('Failed to update task status:', error);
-        showModal('error', 'Failed to update task status. Please try again.');
+        showModal('error', `Failed to update task status: ${error.message} `);
       }
     }
   });
