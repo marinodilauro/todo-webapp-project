@@ -5,17 +5,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const taskInput = document.getElementById('task-input');
   const pendingTasksList = document.getElementById('pending-tasks');
   const completedTasksList = document.getElementById('completed-tasks');
-  const errorMessage = document.getElementById('error-message');
-  const successMessage = document.getElementById('success-message');
 
   let tasks = [];
 
-  function showMessage(element, message) {
-    element.textContent = message;
-    element.classList.remove('d-none');
-    setTimeout(() => {
-      element.classList.add('d-none');
-    }, 3000);
+  function showModal(type, message) {
+    const modalId = type === 'success' ? 'successModal' : 'errorModal';
+    const modalElement = document.getElementById(modalId);
+    const modalBodyId = type === 'success' ? 'successModalBody' : 'errorModalBody';
+    document.getElementById(modalBodyId).textContent = message;
+
+    const modal = new bootstrap.Modal(modalElement);
+    modal.show();
+    setTimeout(() => modal.hide(), 3000);
   }
 
   function renderTasks() {
@@ -64,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Failed to load tasks:', error);
       tasks = StorageManager.getTasks();
       renderTasks();
-      showMessage(errorMessage, 'Failed to load tasks from the server. Showing cached tasks.');
+      showModal('error', 'Failed to load tasks from the server. Showing cached tasks.');
     }
   }
 
@@ -78,10 +79,13 @@ document.addEventListener('DOMContentLoaded', () => {
         StorageManager.saveTasks(tasks);
         renderTasks();
         taskInput.value = '';
-        showMessage(successMessage, 'Task added successfully!');
+        const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+        document.getElementById('successModalBody').textContent = 'Task added successfully!';
+        successModal.show();
+        setTimeout(() => successModal.hide(), 3000);
       } catch (error) {
         console.error('Failed to add task:', error);
-        showMessage(errorMessage, 'Failed to add task. Please try again.');
+        showModal('error', 'Failed to add task. Please try again.');
       }
     }
   });
@@ -90,23 +94,38 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target.closest('.edit-task')) {
       const taskId = e.target.closest('.edit-task').dataset.id;
       const taskElement = e.target.closest('.task-item').querySelector('span');
-      const newContent = prompt('Edit task:', taskElement.textContent);
-      if (newContent !== null && newContent.trim() !== '') {
-        try {
-          await TodoistAPI.updateTask(taskId, { content: newContent });
-          const taskIndex = tasks.findIndex(t => t.id === taskId);
-          tasks[taskIndex].content = newContent;
-          StorageManager.saveTasks(tasks);
-          renderTasks();
-          showMessage(successMessage, 'Task updated successfully!');
-        } catch (error) {
-          console.error('Failed to update task:', error);
-          showMessage(errorMessage, 'Failed to update task. Please try again.');
+      const editModal = new bootstrap.Modal(document.getElementById('editTaskModal'));
+      const editTaskInput = document.getElementById('editTaskInput');
+      const saveEditTaskBtn = document.getElementById('saveEditTaskBtn');
+
+      editTaskInput.value = taskElement.textContent;
+      editModal.show();
+
+      saveEditTaskBtn.onclick = async () => {
+        const newContent = editTaskInput.value.trim();
+        if (newContent !== '') {
+          try {
+            await TodoistAPI.updateTask(taskId, { content: newContent });
+            const taskIndex = tasks.findIndex(t => t.id === taskId);
+            tasks[taskIndex].content = newContent;
+            StorageManager.saveTasks(tasks);
+            renderTasks();
+            editModal.hide();
+            showModal('success', 'Task updated successfully!');
+          } catch (error) {
+            console.error('Failed to update task:', error);
+            showModal('error', 'Failed to update task. Please try again.');
+          }
         }
-      }
+      };
     } else if (e.target.closest('.delete-task')) {
       const taskId = e.target.closest('.delete-task').dataset.id;
-      if (confirm('Are you sure you want to delete this task?')) {
+      const deleteModal = new bootstrap.Modal(document.getElementById('deleteTaskModal'));
+      const confirmDeleteTaskBtn = document.getElementById('confirmDeleteTaskBtn');
+
+      deleteModal.show();
+
+      confirmDeleteTaskBtn.onclick = async () => {
         try {
           await TodoistAPI.deleteTask(taskId);
           const taskElement = e.target.closest('.task-item');
@@ -116,12 +135,13 @@ document.addEventListener('DOMContentLoaded', () => {
             StorageManager.saveTasks(tasks);
             renderTasks();
           }, 500);
-          showMessage(successMessage, 'Task deleted successfully!');
+          deleteModal.hide();
+          showModal('success', 'Task deleted successfully!');
         } catch (error) {
           console.error('Failed to delete task:', error);
-          showMessage(errorMessage, 'Failed to delete task. Please try again.');
+          showModal('error', 'Failed to delete task. Please try again.');
         }
-      }
+      };
     } else if (e.target.closest('.toggle-task')) {
       const taskId = e.target.closest('.toggle-task').dataset.id;
       const taskIndex = tasks.findIndex(t => t.id === taskId);
@@ -135,10 +155,10 @@ document.addEventListener('DOMContentLoaded', () => {
         tasks[taskIndex].completed = newStatus;
         StorageManager.saveTasks(tasks);
         renderTasks();
-        showMessage(successMessage, `Task marked as ${newStatus ? 'completed' : 'pending'}!`);
+        showModal('success', `Task marked as ${newStatus ? 'completed' : 'pending'}!`);
       } catch (error) {
         console.error('Failed to update task status:', error);
-        showMessage(errorMessage, 'Failed to update task status. Please try again.');
+        showModal('error', 'Failed to update task status. Please try again.');
       }
     }
   });

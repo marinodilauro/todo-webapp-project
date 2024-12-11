@@ -21,7 +21,9 @@ async function apiRequest(endpoint, method = 'GET', data = null) {
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    return await response.json();
+    // Check if the response has content before parsing JSON
+    const text = await response.text();
+    return text ? JSON.parse(text) : null;
   } catch (error) {
     console.error('API request failed:', error);
     throw error;
@@ -35,4 +37,3 @@ const TodoistAPI = {
   deleteTask: (id) => apiRequest(`/tasks/${id}`, 'DELETE'),
   closeTask: (id) => apiRequest(`/tasks/${id}/close`, 'POST')
 };
-
